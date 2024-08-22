@@ -32,8 +32,7 @@ export type CreateNodeTypeOptions = {
     execEditorCommand?: (command: EditorCommand) => void
 }
 
-export type NodeType = Omit<CreateNodeTypeOptions, 'getChildTypes' | 'allowChild'> & {
-    childTypes: NodeType[]
+export type NodeType = Omit<CreateNodeTypeOptions, 'allowChild'> & {
     allowChild: (node: Node, pos: number) => boolean
     addEmptyChildBefore: (node: Node) => void
     addEmptyChildAfter: (before: Node) => void
@@ -42,8 +41,6 @@ export type NodeType = Omit<CreateNodeTypeOptions, 'getChildTypes' | 'allowChild
 }
 
 export function createNodeType(opts: CreateNodeTypeOptions): NodeType {
-    const childTypes = opts.getChildTypes()
-
     function addEmptyChildBefore(before: Node) {
         if (opts.createEmptyChild) {
             insertAfter(opts.createEmptyChild(), before)
@@ -71,7 +68,7 @@ export function createNodeType(opts: CreateNodeTypeOptions): NodeType {
     function allowChild(node: Node, pos: number): boolean {
         let defaultAllowed = false
 
-        for (const type of childTypes) {
+        for (const type of opts.getChildTypes()) {
             if (type.matchRoot(node)) {
                 defaultAllowed = true
                 break
@@ -79,7 +76,7 @@ export function createNodeType(opts: CreateNodeTypeOptions): NodeType {
         }
 
         if (opts.allowChild) {
-            return opts.allowChild(node, pos, childTypes, defaultAllowed)
+            return opts.allowChild(node, pos, opts.getChildTypes(), defaultAllowed)
         }
 
         return false
@@ -87,7 +84,6 @@ export function createNodeType(opts: CreateNodeTypeOptions): NodeType {
 
     return {
         ...opts,
-        childTypes,
         allowChild,
         addEmptyChildBefore,
         addEmptyChildAfter,
