@@ -12,6 +12,17 @@ export function startEditor(root: HTMLElement, typesNodes = defaultTypeNodes) {
     root.setAttribute('editor-init', '1')
     root.contentEditable = 'true'
 
+    const rootType = matchType(root, typesNodes)
+
+    if (!root) {
+        throw new Error("Invalid root type")
+    }
+
+    if (!validateTree(root, typesNodes)) {
+        root.innerHTML = ''
+        rootType?.addEmptyChildFirst(root)
+    }
+
     let lastValidHTML = root.innerHTML
     let lastCaret: CaretPosition | null = null
 
@@ -60,8 +71,16 @@ function validateTree(node: Node, types: NodeType[]) {
         return false
     }
 
+    if (node.childNodes.length < type.minChildrenCount) {
+        return false
+    }
+
+    if (type.noChildren) {
+        return true
+    }
+
     for (const [i, child] of node.childNodes.entries()) {
-        if (!type.allowChild(child, i)) {
+        if (!type.validateChild(child, i, node)) {
             return false
         }
 
