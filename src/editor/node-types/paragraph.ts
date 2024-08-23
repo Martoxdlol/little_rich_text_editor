@@ -1,4 +1,4 @@
-import { matchType, setCaret } from '../lib'
+import { insertBefore, matchType, setCaret } from '../lib'
 import { breakType } from './break'
 import { createNodeType } from './lib'
 import { unorderedListType } from './list'
@@ -31,15 +31,9 @@ export const paragraphType = createNodeType({
             command.inputType === 'insertParagraph' &&
             unorderedListItemType.matchRoot(command.node.parentNode!)
         ) {
-            let container = command.node.parentNode?.parentNode
-            let target: Node | null | undefined = command.node.parentNode
-
-            // If parent is a list, we don't want to create a new list item,
-            // we want to create a item outside the list, so we set out target and container outside the ul
-            if (container && unorderedListType.matchRoot(container)) {
-                container = container.parentNode
-                target = target?.parentNode
-            }
+            let container = command.node.parentNode?.parentNode?.parentNode
+            let target: Node | null | undefined =
+                command.node.parentNode?.parentNode
 
             if (container && target) {
                 const type = matchType(container, ctx.nodeTypes)
@@ -54,9 +48,32 @@ export const paragraphType = createNodeType({
                 command.node.textContent?.trim() === ''
             ) {
                 ;(command.node.parentNode as HTMLElement).remove()
+            } else if (command.node.lastChild instanceof HTMLBRElement) {
+                ;(command.node.lastChild as HTMLBRElement).remove()
             }
 
             return { allowDefault: false }
+        }
+
+        // Delete first li
+        if (
+            command.inputType === 'deleteContentBackward' &&
+            unorderedListItemType.matchRoot(command.node.parentNode!)
+            // @ts-ignore
+            // Typescript error
+        ) {
+            const li = command.node.parentNode
+            const ul = li?.parentNode
+
+            // @ts-ignore
+            if (li && ul && ul.childNodes[0] === li) {
+                ;(command.node as HTMLParagraphElement).remove()
+                insertBefore(command.node, ul)
+                if (!ul.hasChildNodes()) {
+                    ;(ul as HTMLElement).remove()
+                }
+                return { allowDefault: false }
+            }
         }
 
         return { allowDefault: true }

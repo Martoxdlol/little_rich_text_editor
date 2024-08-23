@@ -71,6 +71,10 @@ export function startEditor(
         if (!output?.allowDefault) {
             e.preventDefault()
         }
+
+        cleanupTree(root, nodeTypes)
+
+        console.log(e, command)
     }
 
     // Runs second,
@@ -94,10 +98,12 @@ function validateTree(root: Node, types: NodeType[]): boolean {
     const type = matchType(root, types)
 
     if (!type) {
+        console.warn('Invalid root type', root)
         return false
     }
 
     if (root.childNodes.length < type.minChildrenCount) {
+        console.warn('Invalid root child count', root)
         return false
     }
 
@@ -117,4 +123,23 @@ function validateTree(root: Node, types: NodeType[]): boolean {
     }
 
     return true
+}
+
+function cleanupTree(root: Node, types: NodeType[]) {
+    const type = matchType(root, types)
+
+    if (!type || root.childNodes.length < type.minChildrenCount) {
+        if (root instanceof HTMLElement) {
+            root.remove()
+        }
+        return
+    }
+
+    if (type.noChildren) {
+        return !root.hasChildNodes()
+    }
+
+    for (const child of root.childNodes) {
+        cleanupTree(child, types)
+    }
 }
