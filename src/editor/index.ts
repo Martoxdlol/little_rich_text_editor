@@ -5,11 +5,13 @@ import type { NodeType } from "./node-types/lib"
 
 
 export function startEditor(root: HTMLElement, typesNodes = defaultTypeNodes) {
+    // prevent reinitialize editor
     if (root.hasAttribute('editor-init')) {
         return
     }
-
     root.setAttribute('editor-init', '1')
+
+    // make it editable! yey!!!
     root.contentEditable = 'true'
 
     const rootType = matchType(root, typesNodes)
@@ -23,9 +25,12 @@ export function startEditor(root: HTMLElement, typesNodes = defaultTypeNodes) {
         rootType?.addEmptyChildFirst(root)
     }
 
+    // Save caret position and html for when restoring the tree
     let lastValidHTML = root.innerHTML
     let lastCaret: CaretPosition | null = null
 
+    // When something happen, this runs first
+    // It may do some changes by itself
     root.onbeforeinput = (e) => {
         lastCaret = getCaret()
         lastValidHTML = root.innerHTML
@@ -50,10 +55,13 @@ export function startEditor(root: HTMLElement, typesNodes = defaultTypeNodes) {
         }
     }
 
+    // Runs second,
+    // we need to verify the tree and prevent invalid states
     root.oninput = () => {
         if (validateTree(root, typesNodes)) {
             lastValidHTML = root.innerHTML
         } else {
+            console.warn("Invalid tree, restoring")
             root.innerHTML = lastValidHTML
             if (lastCaret) {
                 setCaret(lastCaret)
@@ -64,23 +72,23 @@ export function startEditor(root: HTMLElement, typesNodes = defaultTypeNodes) {
 
 
 
-function validateTree(node: Node, types: NodeType[]) {
-    const type = matchType(node, types)
+function validateTree(root: Node, types: NodeType[]) {
+    const type = matchType(root, types)
 
     if (!type) {
         return false
     }
 
-    if (node.childNodes.length < type.minChildrenCount) {
+    if (root.childNodes.length < type.minChildrenCount) {
         return false
     }
 
     if (type.noChildren) {
-        return true
+        return root.childNodes.length === 0
     }
 
-    for (const [i, child] of node.childNodes.entries()) {
-        if (!type.validateChild(child, i, node)) {
+    for (const [i, child] of root.childNodes.entries()) {
+        if (!type.validateChild(child, i, root)) {
             return false
         }
 

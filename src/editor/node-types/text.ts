@@ -1,7 +1,8 @@
+import { breakType } from "./break"
 import { createNodeType } from "./lib"
 
 export const textType = createNodeType({
-    getChildTypes: () => [],
+    getChildTypes: () => [breakType],
     createEmpty: () => {
         return new Text()
     },

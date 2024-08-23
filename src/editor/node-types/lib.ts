@@ -100,8 +100,8 @@ export function createNodeType(opts: CreateNodeTypeOptions): NodeType {
     function validateChild(node: Node, pos: number, container: Node): boolean {
         const defaultValid = allowChild(node, pos, container)
 
-        if (opts.allowChild) {
-            return opts.allowChild(node, pos, node, opts.getChildTypes(), defaultValid)
+        if (opts.validateChild) {
+            return opts.validateChild(node, pos, container, opts.getChildTypes(), defaultValid)
         }
 
         return defaultValid
