@@ -2,3 +2,11 @@
     margin: 0;
     padding: 0;
 }
+
+ul {
+    padding-left: 20px;
+}
+
+#editor-root p {
+    margin: 0.8rem 0;
+}
